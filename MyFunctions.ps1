@@ -1,64 +1,68 @@
-#ConnectExchange Online
-Function ConnectExchOnline {
+#Author: Sunil Chauhan
+#EMAIL:sunilkms@gmail.com
+# These are the functions i setup to make my daily work easy.
 
-Try {
-
-"Trying connecting to Exchange Online"
-
-Connect-EXOPSSession -Credential $Cred -ea Stop } catch {
-
-"Failed to connect try connectin gusing MFA if you are not of company network"
-
-    }
-
+#Connect Exchange Online work in EXO Module-----
+Function ConnectExchOnline 
+{
+	Try	{
+		"Trying connecting to Exchange Online"
+		Connect-EXOPSSession -Credential $Cred -ea Stop 
+		} 
+	catch {
+		"Failed to connect try connectin gusing MFA if you are not of company network" 
+		}
 }
 
-#Connect Exchange online protection
-Function ConnectEXOP {
-
-Connect-IPPSSession -Credential $Cred
-
+#Connect Exchange online protection - Work with EXO MFA module
+Function ConnectEXOP 
+{
+	Try	{
+		"Trying connecting to Exchange Online Protection"
+		Connect-IPPSSession -Credential $Cred -ea Stop 
+		} 
+	catch {
+		"Failed to connect try connectin gusing MFA if you are not of company network" 
+	      }
 }
 
-
-Function ConnectPIM {
-
-Connect-PimService -Credential $Cred
-
+#Connect Priviledged Identity Management -
+#if not installed alredy, install instruction "https://www.sunilchauhan.info/2018/11/azure-ad-privileged-identity-management.html"
+Function ConnectPIM 
+{
+	Try	{
+		"Trying connecting to Exchange Online Protection"
+		Connect-PimService -Credential $Cred -ea Stop 
+		} 
+	catch {
+		"Failed to connect try connectin gusing MFA if you are not of company network" 
+	      }
 }
 
-Function GetRolesStatus {
+#Get your current active roles
+Function GetRolesStatus {Get-PrivilegedRoleAssignment | ft }
 
-Get-PrivilegedRoleAssignment | ft
-
-}
-
-#Enable basic auth in registry if disabled.
-
+#Enable basic auth in registry if disabled, powershell should be started using administrator
 Function EnableBASICAuth {
-
 	try {
  		$regpath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client"
 		if (!(Get-ItemProperty $regpath).Allowbasic) {Set-ItemProperty -Path $regpath -Name AllowBasic -Value 1 -ea Stop}
 		Get-ItemProperty $regpath
 	    }
      catch { Write-host "Failed to update the basic Auth, start powershell with admin rights" -f yellow} 
-
 }
 
-
-Function GetMsol-UserError {
-
-Param ($user)
-$e = Get-MsolUser -UserPrincipalName $user
-$e.Errors | % {$_.ErrorDetail.ObjectErrors.ErrorRecord.ErrorDescription}
-
+#Get Msol user errors 
+Function GetMsol-UserError 
+{
+	Param ($user)
+	$e = Get-MsolUser -UserPrincipalName $user
+	$e.Errors | % {$_.ErrorDetail.ObjectErrors.ErrorRecord.ErrorDescription}
 }
 
+#Get Assigned Licenses to a user (Should be connected to MSOL)
 Function GetMsol-AssignedUserLicenses {
-
 Param ($user)
-
             $e = Get-MsolUser -UserPrincipalName $user
             $e.Licenses | % {
 ""
@@ -68,13 +72,11 @@ $_.AccountSkuId
 $l
 ""
            $_.ServiceStatus
-
-                            }
-
+                          }
 }
 
+#Connect to onpremise Exchange Server
 Function ConnectOnpremiseExchange {
-
 $UserAccount = "" #update your userid and password.
 $Password = $cred.GetNetworkCredential().password # update your password
 $cred = new-object –TypeName System.Management.Automation.PSCredential –ArgumentList $UserAccount, (ConvertTo-SecureString $Password –AsPlainText –Force)
